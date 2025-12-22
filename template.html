@@ -4,20 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>La cave de {{ client.prenom }}</title>
+
   <link rel="stylesheet" href="/assets/style.css" />
 </head>
 <body>
 
-  <header>
-    <h1>🍷 La cave de {{ client.prenom }}</h1>
-    <p>Plan Épargne Liquide</p>
+  <header class="header">
+    <p class="brand">🍷 Cave des Poètes</p>
+    <h1>La cave de {{ client.prenom }}</h1>
+    <p class="subtitle">Plan Épargne Liquide</p>
   </header>
 
-  <section>
-    <p><strong>Budget mensuel :</strong> {{ pel.budget }} €</p>
-    <p><strong>Bouteilles en cave :</strong> {{ cave.nb_bouteilles }}</p>
-    <p><strong>Valeur totale :</strong> {{ cave.valeur }} €</p>
+  <section class="kpi">
+    <div class="card">
+      <span>Budget mensuel</span>
+      <strong>{{ pel.budget }} €</strong>
+    </div>
+    <div class="card">
+      <span>Bouteilles en cave</span>
+      <strong>{{ cave.nb_bouteilles }}</strong>
+    </div>
+    <div class="card">
+      <span>Valeur totale</span>
+      <strong>{{ cave.valeur }} €</strong>
+    </div>
   </section>
+
+  <section class="highlight">
+    <h2>🍾 La bouteille du mois</h2>
+    <div class="card highlight-card">
+      <h3>{{ bouteille_mois.nom }}</h3>
+      <p class="meta">
+        {{ bouteille_mois.domaine }} · {{ bouteille_mois.couleur }}
+      </p>
+      <p class="description">
+        {{ bouteille_mois.conseil }}
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>📦 Ma cave</h2>
+    <div class="grid">
+      {{#each bouteilles}}
+      <div class="card bottle">
+        <h3>{{ nom }}</h3>
+        <p class="meta">{{ domaine }} · {{ couleur }}</p>
+        <p class="price">{{ prix }} €</p>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Conseillé et conservé par votre caviste</p>
+  </footer>
 
 </body>
 </html>
