@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>La cave de {{ client.prenom }}</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>🍷 La cave de {{ client.prenom }}</h1>
+    <p>Plan Épargne Liquide</p>
+  </header>
+
+  <section>
+    <p><strong>Budget mensuel :</strong> {{ pel.budget }} €</p>
+    <p><strong>Bouteilles en cave :</strong> {{ cave.nb_bouteilles }}</p>
+    <p><strong>Valeur totale :</strong> {{ cave.valeur }} €</p>
+  </section>
+
+</body>
+</html>
