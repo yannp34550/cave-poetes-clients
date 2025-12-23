@@ -2,38 +2,40 @@ import { getStore } from '@netlify/blobs';
 
 export default async (req) => {
   try {
+    // 🔒 Méthode autorisée
     if (req.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const body = await req.json();
-    const { clientId, html } = body;
+    // 📦 Lecture du body JSON
+    const { clientId, html } = await req.json();
 
     if (!clientId || !html) {
       return new Response(
         JSON.stringify({ error: 'clientId ou html manquant' }),
-        { status: 400 }
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
       );
     }
 
+    // 🗄️ Accès au store Blobs
     const store = getStore('caves-html');
-    const filename = `caves/${clientId}.html`;
+    const key = `caves/${clientId}.html`;
 
-    await store.set(filename, html, {
-      contentType: 'text/html',
+    // 💾 Sauvegarde du HTML
+    await store.set(key, html, {
+      contentType: 'text/html; charset=utf-8',
     });
 
-    // ✅ URL dynamique du site Netlify
-    const baseUrl =
-      process.env.URL || process.env.DEPLOY_PRIME_URL;
-
-    const publicUrl = `https://macavedespoetes.netlify.app/.netlify/blobs/caves-html/${filename}`;
-
+    // ✅ Réponse : on NE retourne PAS une URL de blob
+    // 👉 on retourne une URL logique vers la function de lecture
     return new Response(
       JSON.stringify({
         success: true,
         clientId,
-        url: publicUrl,
+        accessUrl: `/cave/${clientId}`,
       }),
       {
         status: 200,
@@ -48,7 +50,10 @@ export default async (req) => {
         error: 'Erreur sauvegarde HTML',
         details: err.message,
       }),
-      { status: 500 }
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
   }
 };
