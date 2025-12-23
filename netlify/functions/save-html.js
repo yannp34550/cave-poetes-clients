@@ -1,6 +1,6 @@
-import { getStore } from "@netlify/blobs";
+const { getStore } = require("@netlify/blobs");
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
       return {
@@ -14,7 +14,8 @@ export const handler = async (event) => {
         ? JSON.parse(event.body)
         : event.body;
 
-    const { clientId, html } = payload || {};
+    const clientId = payload?.clientId;
+    const html = payload?.html;
 
     if (!clientId || !html) {
       return {
@@ -23,10 +24,7 @@ export const handler = async (event) => {
       };
     }
 
-    // ⚠️ store name FIXE
     const store = getStore("caves-html");
-
-    // ⚠️ clé SIMPLE, stable, sans slash
     const key = `${clientId}.html`;
 
     await store.set(key, html, {
