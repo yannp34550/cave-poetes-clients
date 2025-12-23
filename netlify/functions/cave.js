@@ -60,15 +60,6 @@ exports.handler = async (event) => {
 </head>
 <body>
 
-  <div class="banner">
-    <img src="/bannire.webp" alt="Cave des Poètes Béziers">
-    <div class="banner-overlay">
-      <h1 class="banner-title">CAVE DES POÈTES</h1>
-      <p class="banner-subtitle">Béziers — ${prenom}</p>
-    </div>
-  </div>
-
-
   <h1>🍷 La cave de ${prenom}</h1>
 
   <h2>🟢 Bouteilles en cave</h2>
