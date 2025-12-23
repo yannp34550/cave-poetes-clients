@@ -1,3 +1,24 @@
+export async function handler(event) {
+
+  // ✅ On accepte uniquement GET
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
+      headers: { "Allow": "GET" },
+      body: "Method Not Allowed (GET only)",
+    };
+  }
+
+  const clientId = event.queryStringParameters?.clientId;
+
+  if (!clientId) {
+    return {
+      statusCode: 400,
+      body: "clientId manquant",
+    };
+  }
+
+  // ... ton code actuel continue ici
 exports.handler = async (event) => {
   try {
     // Netlify reçoit le JSON via POST
