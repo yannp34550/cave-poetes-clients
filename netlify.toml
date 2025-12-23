@@ -1,4 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
 [[redirects]]
-from = "/cave/:clientId"
-to = "/.netlify/functions/cave-view"
-status = 200
+  from = "/cave/:clientId"
+  to = "/.netlify/functions/cave-view"
+  status = 200
