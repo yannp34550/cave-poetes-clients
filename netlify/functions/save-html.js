@@ -1,38 +1,55 @@
-import fs from "fs";
-import path from "path";
+const fs = require("fs");
+const path = require("path");
 
-export async function handler(event) {
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: "Method Not Allowed",
+    };
+  }
+
+  let payload;
   try {
-    const { filename, html } = JSON.parse(event.body || "{}");
+    payload = JSON.parse(event.body);
+  } catch (e) {
+    return {
+      statusCode: 400,
+      body: "JSON invalide",
+    };
+  }
 
-    if (!filename || !html) {
-      return {
-        statusCode: 400,
-        body: "Missing filename or html",
-      };
-    }
+  const { clientId, html } = payload;
 
-    // Dossier cible : /caves
-    const outputDir = path.join(process.cwd(), "caves");
-    const filePath = path.join(outputDir, filename);
+  if (!clientId || !html) {
+    return {
+      statusCode: 400,
+      body: "clientId ou html manquant",
+    };
+  }
 
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+  // ⚠️ dossier writable Netlify
+  const cavesDir = "/tmp/caves";
+  const filePath = path.join(cavesDir, `${clientId}.html`);
+
+  try {
+    if (!fs.existsSync(cavesDir)) {
+      fs.mkdirSync(cavesDir);
     }
 
     fs.writeFileSync(filePath, html, "utf8");
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        url: `/caves/${filename}`,
-      }),
-    };
-  } catch (err) {
+  } catch (e) {
     return {
       statusCode: 500,
-      body: err.toString(),
+      body: "Erreur écriture fichier",
     };
   }
-}
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      success: true,
+      path: filePath,
+    }),
+  };
+};
