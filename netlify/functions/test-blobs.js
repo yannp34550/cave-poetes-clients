@@ -1,11 +1,25 @@
-const { getStore } = require("@netlify/blobs");
+import { getStore } from '@netlify/blobs';
 
-exports.handler = async () => {
-  const store = getStore("test");
-  await store.set("ping.txt", "OK");
+export default async (req, context) => {
+  try {
+    const store = getStore('test-store');
 
-  return {
-    statusCode: 200,
-    body: "Blobs OK",
-  };
+    await store.set('hello', 'world');
+
+    const value = await store.get('hello');
+
+    return new Response(
+      JSON.stringify({ success: true, value }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (err) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: err.message,
+        stack: err.stack,
+      }),
+      { status: 500 }
+    );
+  }
 };
