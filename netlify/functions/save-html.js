@@ -2,14 +2,11 @@ import { getStore } from '@netlify/blobs';
 
 export default async (req) => {
   try {
-    // 🔒 Vérification méthode
     if (req.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // 📦 Lecture body
     const body = await req.json();
-
     const { clientId, html } = body;
 
     if (!clientId || !html) {
@@ -19,16 +16,18 @@ export default async (req) => {
       );
     }
 
-    // 🗄️ Store blobs
     const store = getStore('caves-html');
-
     const filename = `caves/${clientId}.html`;
 
     await store.set(filename, html, {
       contentType: 'text/html',
     });
 
-    const publicUrl = `https://mycave.netlify.app/.netlify/blobs/caves-html/${filename}`;
+    // ✅ URL dynamique du site Netlify
+    const baseUrl =
+      process.env.URL || process.env.DEPLOY_PRIME_URL;
+
+    const publicUrl = `${baseUrl}/.netlify/blobs/caves-html/${filename}`;
 
     return new Response(
       JSON.stringify({
