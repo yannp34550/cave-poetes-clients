@@ -136,10 +136,13 @@ exports.handler = async (event) => {
   ========================== */
 
   return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-    },
-    body: html,
-  };
+  statusCode: 200,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    clientId,
+    html,
+  }),
 };
+
