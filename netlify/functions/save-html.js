@@ -1,6 +1,9 @@
-import { getStore } from "@netlify/blobs";
+const { getStore } = require("@netlify/blobs");
 
-export async function handler(event) {
+exports.handler = async (event) => {
+  /* =========================
+     1. Autoriser POST uniquement
+  ========================== */
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -8,11 +11,17 @@ export async function handler(event) {
     };
   }
 
+  /* =========================
+     2. Parsing JSON
+  ========================== */
   let payload;
 
   try {
-    payload = JSON.parse(event.body);
-  } catch {
+    payload =
+      typeof event.body === "string"
+        ? JSON.parse(event.body)
+        : event.body;
+  } catch (err) {
     return {
       statusCode: 400,
       body: "JSON invalide",
@@ -28,17 +37,40 @@ export async function handler(event) {
     };
   }
 
-  const store = getStore("caves-html");
+  /* =========================
+     3. Sauvegarde dans Netlify Blobs
+  ========================== */
+  try {
+    const store = getStore("caves");
 
-  await store.set(`${clientId}.html`, html, {
-    contentType: "text/html",
-  });
+    const filename = `${clientId}.html`;
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      success: true,
-      url: `/caves/${clientId}.html`,
-    }),
-  };
-}
+    await store.set(filename, html, {
+      contentType: "text/html",
+    });
+
+    const url = `https://${process.env.SITE_NAME}.netlify.app/.netlify/blobs/caves/${filename}`;
+
+    /* =========================
+       4. Réponse OK
+    ========================== */
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        success: true,
+        clientId,
+        url,
+      }),
+    };
+  } catch (err) {
+    console.error(err);
+
+    return {
+      statusCode: 500,
+      body: "Erreur lors de la sauvegarde HTML",
+    };
+  }
+};
