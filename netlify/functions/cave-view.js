@@ -2,8 +2,9 @@ import { getStore } from '@netlify/blobs';
 
 export async function handler(event) {
   try {
-    // 🔎 clientId depuis l'URL /cave/:clientId
-    const clientId = event.pathParameters?.clientId;
+    // 🔎 Récupération fiable du clientId via l'URL
+    const segments = event.path.split('/');
+    const clientId = segments[segments.length - 1];
 
     if (!clientId) {
       return {
@@ -31,6 +32,7 @@ export async function handler(event) {
       },
       body: html,
     };
+
   } catch (err) {
     console.error('cave-view error:', err);
     return {
