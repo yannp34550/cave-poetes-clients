@@ -27,7 +27,7 @@ export default async (req) => {
     const baseUrl =
       process.env.URL || process.env.DEPLOY_PRIME_URL;
 
-    const publicUrl = `${baseUrl}/.netlify/blobs/caves-html/${filename}`;
+    const publicUrl = `https://macavedespoetes.netlify.app/.netlify/blobs/caves-html/${filename}`;
 
     return new Response(
       JSON.stringify({
