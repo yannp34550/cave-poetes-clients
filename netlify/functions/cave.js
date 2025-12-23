@@ -1,83 +1,92 @@
+// netlify/functions/cave.js
+
 exports.handler = async (event) => {
-  /* =========================
-     1. Méthode HTTP
-  ========================== */
+  const params = event.queryStringParameters || {};
 
-  const method = event.httpMethod;
+  const clientSlug = params.client || null;
+  const clientIdParam = params.clientId || null;
 
-  if (method !== "GET" && method !== "POST") {
+  /**
+   * 🔹 TABLE DE RÉSOLUTION (TEMPORAIRE)
+   * ➜ Plus tard : remplacée par appel n8n / Notion
+   */
+  const CLIENTS = {
+    "yann-pereira": {
+      id: "2ccbfc76-bafa-80fc-81b8-caba00e0c9c3",
+      prenom: "Yann",
+      nom: "PEREIRA",
+    },
+    "erick-menivale": {
+      id: "2d1bfc76-bafa-80a7-93de-c42d2991ff67",
+      prenom: "Erick",
+      nom: "MENIVALE",
+    },
+  };
+
+  let clientMeta = null;
+
+  // 1️⃣ Résolution par slug (prioritaire)
+  if (clientSlug && CLIENTS[clientSlug]) {
+    clientMeta = CLIENTS[clientSlug];
+  }
+
+  // 2️⃣ Fallback par clientId (ancien fonctionnement)
+  if (!clientMeta && clientIdParam) {
+    clientMeta = Object.values(CLIENTS).find(
+      (c) => c.id === clientIdParam
+    );
+  }
+
+  if (!clientMeta) {
     return {
-      statusCode: 405,
-      body: "Method Not Allowed (use GET or POST)",
+      statusCode: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      body: "Client introuvable",
     };
   }
 
-  /* =========================
-     2. Récupération des données
-     - POST : body JSON (n8n)
-     - GET  : query params (test navigateur)
-  ========================== */
-
-  let payload;
-
-  try {
-    if (method === "POST") {
-      payload =
-        typeof event.body === "string"
-          ? JSON.parse(event.body)
-          : event.body;
-    } else {
-      // GET → test simple
-      payload = {
-        clientId: event.queryStringParameters?.clientId || "test",
-        client: {
-          prenom: "Test",
+  /**
+   * 🔹 DONNÉES SIMULÉES (inchangées)
+   * ➜ Elles viendront de n8n ensuite
+   */
+  const data = {
+    client: {
+      prenom: clientMeta.prenom,
+      nom: clientMeta.nom,
+    },
+    bouteilles: {
+      enCave: [
+        {
+          nom: "DOMAINE DE CEBENE LES BANCELS 75CL RG",
+          prix: 18.9,
+          dateAttribution: "2025-12-21",
         },
-        bouteilles: {
-          enCave: [],
-          retirees: [],
+        {
+          nom: "LA RECTORIE COTE MER RG 75CL",
+          prix: 20.6,
+          dateAttribution: "2025-12-21",
         },
-        totaux: {
-          nbBouteilles: 0,
-          valeurEnCave: 0,
+      ],
+      retirees: [
+        {
+          nom: "LA VOULTE GASPARETS ROMAIN PAUC RG 75CL",
+          prix: 25.5,
+          dateAttribution: "2025-12-21",
+          dateRetrait: "2025-12-23",
         },
-      };
-    }
-  } catch (err) {
-    return {
-      statusCode: 400,
-      body: "JSON invalide",
-    };
-  }
+      ],
+    },
+  };
 
-  /* =========================
-     3. Validation minimale
-  ========================== */
-
-  if (!payload.clientId) {
-    return {
-      statusCode: 400,
-      body: "clientId manquant",
-    };
-  }
-
-  /* =========================
-     4. Données utiles
-  ========================== */
-
-  const prenom = payload.client?.prenom || "Client";
-  const bouteilles = payload.bouteilles?.enCave || [];
-
-  /* =========================
-     5. Génération HTML
-  ========================== */
-
+  /**
+   * 🔹 HTML FINAL
+   */
   const html = `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>La cave de ${prenom}</title>
+  <title>La cave de ${data.client.prenom}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -105,35 +114,48 @@ exports.handler = async (event) => {
       font-size: 13px;
       color: #666;
     }
+    .retiree {
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
 
-  <h1>🍷 La cave de ${prenom}</h1>
+  <h1>🍷 La cave de ${data.client.prenom}</h1>
 
-  ${
-    bouteilles.length === 0
-      ? `<p>Aucune bouteille en cave pour le moment.</p>`
-      : bouteilles
-          .map(
-            (b) => `
+  ${data.bouteilles.enCave
+    .map(
+      (b) => `
     <div class="card">
       <div>${b.nom}</div>
-      <div class="price">${Number(b.prix).toFixed(2)} €</div>
+      <div class="price">${b.prix.toFixed(2)} €</div>
       <div class="date">Attribuée le ${b.dateAttribution}</div>
     </div>
   `
-          )
-          .join("")
+    )
+    .join("")}
+
+  ${
+    data.bouteilles.retirees.length
+      ? `<h2>🍾 Bouteilles retirées</h2>`
+      : ""
   }
+
+  ${data.bouteilles.retirees
+    .map(
+      (b) => `
+    <div class="card retiree">
+      <div>${b.nom}</div>
+      <div class="price">${b.prix.toFixed(2)} €</div>
+      <div class="date">Retirée le ${b.dateRetrait}</div>
+    </div>
+  `
+    )
+    .join("")}
 
 </body>
 </html>
 `;
-
-  /* =========================
-     6. Réponse
-  ========================== */
 
   return {
     statusCode: 200,
