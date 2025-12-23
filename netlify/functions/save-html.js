@@ -1,46 +1,48 @@
-const { getStore } = require("@netlify/blobs");
+import { getStore } from "@netlify/blobs";
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
-
-  let payload;
-
+export const handler = async (event) => {
   try {
-    payload = JSON.parse(event.body);
-  } catch (e) {
-    return { statusCode: 400, body: "JSON invalide" };
-  }
+    if (event.httpMethod !== "POST") {
+      return {
+        statusCode: 405,
+        body: "Method Not Allowed",
+      };
+    }
 
-  const clientId = payload.clientId;
-  const html = payload.html;
+    const payload =
+      typeof event.body === "string"
+        ? JSON.parse(event.body)
+        : event.body;
 
-  if (!clientId || !html) {
-    return {
-      statusCode: 400,
-      body: "clientId ou html manquant",
-    };
-  }
+    const { clientId, html } = payload || {};
 
-  try {
-    const store = getStore("caves");
+    if (!clientId || !html) {
+      return {
+        statusCode: 400,
+        body: "clientId ou html manquant",
+      };
+    }
 
-    await store.set(`${clientId}.html`, html, {
+    // ⚠️ store name FIXE
+    const store = getStore("caves-html");
+
+    // ⚠️ clé SIMPLE, stable, sans slash
+    const key = `${clientId}.html`;
+
+    await store.set(key, html, {
       contentType: "text/html; charset=utf-8",
     });
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ok: true,
-        clientId,
-        file: `${clientId}.html`,
+        key,
+        url: `/.netlify/blobs/caves-html/${key}`,
       }),
     };
   } catch (err) {
-    console.error("BLOBS ERROR", err);
+    console.error("SAVE HTML ERROR", err);
 
     return {
       statusCode: 500,
