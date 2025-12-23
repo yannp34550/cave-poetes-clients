@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/cave/:clientId"
+  to = "/.netlify/functions/cave-view"
+  status = 200
