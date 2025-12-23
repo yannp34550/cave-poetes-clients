@@ -14,8 +14,6 @@ exports.handler = async (event) => {
 
   /* =========================
      2. Récupération des données
-     - POST : body JSON (n8n)
-     - GET  : query params (test navigateur)
   ========================== */
 
   let payload;
@@ -27,19 +25,15 @@ exports.handler = async (event) => {
           ? JSON.parse(event.body)
           : event.body;
     } else {
-      // GET → test simple
+      // GET → lecture publique
       payload = {
-        clientId: event.queryStringParameters?.clientId || "test",
+        clientId: event.queryStringParameters?.clientId,
         client: {
-          prenom: "Test",
+          prenom: "Client",
         },
         bouteilles: {
           enCave: [],
           retirees: [],
-        },
-        totaux: {
-          nbBouteilles: 0,
-          valeurEnCave: 0,
         },
       };
     }
@@ -51,10 +45,12 @@ exports.handler = async (event) => {
   }
 
   /* =========================
-     3. Validation minimale
+     3. Validation
   ========================== */
 
-  if (!payload.clientId) {
+  const clientId = payload?.clientId;
+
+  if (!clientId) {
     return {
       statusCode: 400,
       body: "clientId manquant",
@@ -132,13 +128,15 @@ exports.handler = async (event) => {
 `;
 
   /* =========================
-     6. Réponse
+     6. Réponse HTML
   ========================== */
 
   return {
     statusCode: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
+      // utile plus tard (debug, cache, logs)
+      "X-Client-Id": clientId,
     },
     body: html,
   };
