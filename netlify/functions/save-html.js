@@ -1,50 +1,55 @@
-const { getStore } = require("@netlify/blobs");
+import { getStore } from '@netlify/blobs';
 
-exports.handler = async (event) => {
+export default async (req) => {
   try {
-    if (event.httpMethod !== "POST") {
-      return {
-        statusCode: 405,
-        body: "Method Not Allowed",
-      };
+    // 🔒 Vérification méthode
+    if (req.method !== 'POST') {
+      return new Response('Method Not Allowed', { status: 405 });
     }
 
-    const payload =
-      typeof event.body === "string"
-        ? JSON.parse(event.body)
-        : event.body;
+    // 📦 Lecture body
+    const body = await req.json();
 
-    const clientId = payload?.clientId;
-    const html = payload?.html;
+    const { clientId, html } = body;
 
     if (!clientId || !html) {
-      return {
-        statusCode: 400,
-        body: "clientId ou html manquant",
-      };
+      return new Response(
+        JSON.stringify({ error: 'clientId ou html manquant' }),
+        { status: 400 }
+      );
     }
 
-    const store = getStore("caves-html");
-    const key = `${clientId}.html`;
+    // 🗄️ Store blobs
+    const store = getStore('caves-html');
 
-    await store.set(key, html, {
-      contentType: "text/html; charset=utf-8",
+    const filename = `caves/${clientId}.html`;
+
+    await store.set(filename, html, {
+      contentType: 'text/html',
     });
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        ok: true,
-        key,
-        url: `/.netlify/blobs/caves-html/${key}`,
-      }),
-    };
-  } catch (err) {
-    console.error("SAVE HTML ERROR", err);
+    const publicUrl = `https://mycave.netlify.app/.netlify/blobs/caves-html/${filename}`;
 
-    return {
-      statusCode: 500,
-      body: "Erreur sauvegarde HTML",
-    };
+    return new Response(
+      JSON.stringify({
+        success: true,
+        clientId,
+        url: publicUrl,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (err) {
+    console.error('save-html error:', err);
+
+    return new Response(
+      JSON.stringify({
+        error: 'Erreur sauvegarde HTML',
+        details: err.message,
+      }),
+      { status: 500 }
+    );
   }
 };
