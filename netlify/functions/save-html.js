@@ -1,45 +1,20 @@
-import { getStore } from "@netlify/blobs";
+const { getStore } = require("@netlify/blobs");
 
-export async function handler(event) {
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  /* =========================
-     NORMALISATION DU PAYLOAD
-     (n8n-proof, définitif)
-  ========================== */
-
-  let payload = null;
+  let payload;
 
   try {
-    // 1. event.body est TOUJOURS une string sur Netlify
-    const parsed = JSON.parse(event.body);
-
-    // 2. n8n encapsule parfois le vrai JSON dans parsed.body
-    if (typeof parsed.body === "string") {
-      payload = JSON.parse(parsed.body);
-    } else {
-      payload = parsed;
-    }
+    payload = JSON.parse(event.body);
   } catch (e) {
-    return {
-      statusCode: 400,
-      body: "JSON invalide (parse impossible)",
-    };
+    return { statusCode: 400, body: "JSON invalide" };
   }
 
-  /* =========================
-     EXTRACTION ROBUSTE
-  ========================== */
-
-  const clientId =
-    payload.clientId ||
-    payload.clientid ||
-    payload.client_id ||
-    null;
-
-  const html = payload.html || null;
+  const clientId = payload.clientId;
+  const html = payload.html;
 
   if (!clientId || !html) {
     return {
@@ -48,15 +23,10 @@ export async function handler(event) {
     };
   }
 
-  /* =========================
-     SAUVEGARDE NETLIFY BLOBS
-  ========================== */
-
   try {
     const store = getStore("caves");
-    const filename = `${clientId}.html`;
 
-    await store.set(filename, html, {
+    await store.set(`${clientId}.html`, html, {
       contentType: "text/html; charset=utf-8",
     });
 
@@ -66,13 +36,15 @@ export async function handler(event) {
       body: JSON.stringify({
         ok: true,
         clientId,
-        url: `/caves/${filename}`,
+        file: `${clientId}.html`,
       }),
     };
-  } catch (e) {
+  } catch (err) {
+    console.error("BLOBS ERROR", err);
+
     return {
       statusCode: 500,
       body: "Erreur sauvegarde HTML",
     };
   }
-}
+};
