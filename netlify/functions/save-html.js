@@ -1,18 +1,18 @@
-const fs = require("fs");
-const path = require("path");
+import { getStore } from "@netlify/blobs";
 
-exports.handler = async (event) => {
+export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: "Method Not Allowed",
+      body: "Method Not Allowed (use POST)",
     };
   }
 
   let payload;
+
   try {
     payload = JSON.parse(event.body);
-  } catch (e) {
+  } catch {
     return {
       statusCode: 400,
       body: "JSON invalide",
@@ -28,28 +28,17 @@ exports.handler = async (event) => {
     };
   }
 
-  // ⚠️ dossier writable Netlify
-  const cavesDir = "/tmp/caves";
-  const filePath = path.join(cavesDir, `${clientId}.html`);
+  const store = getStore("caves-html");
 
-  try {
-    if (!fs.existsSync(cavesDir)) {
-      fs.mkdirSync(cavesDir);
-    }
-
-    fs.writeFileSync(filePath, html, "utf8");
-  } catch (e) {
-    return {
-      statusCode: 500,
-      body: "Erreur écriture fichier",
-    };
-  }
+  await store.set(`${clientId}.html`, html, {
+    contentType: "text/html",
+  });
 
   return {
     statusCode: 200,
     body: JSON.stringify({
       success: true,
-      path: filePath,
+      url: `/caves/${clientId}.html`,
     }),
   };
-};
+}
